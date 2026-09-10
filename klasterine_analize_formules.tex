@@ -1,0 +1,549 @@
+\documentclass[9pt,a4paper]{article}
+\usepackage{iftex}
+
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \IfFileExists{l7xenc.def}{%
+    \usepackage[L7x,T1]{fontenc}%
+  }{%
+    \usepackage[T1]{fontenc}%
+  }
+  \IfFileExists{lithuanian.ldf}{%
+    \usepackage[lithuanian]{babel}%
+  }{}
+  \usepackage{lmodern}
+  % Atsarginis UTF-8 lietuviškų raidžių atvaizdavimas, jei kompiliuojama be L7x paketo
+  \makeatletter
+  \@ifundefined{DeclareUnicodeCharacter}{}{%
+    \DeclareUnicodeCharacter{0104}{\k{A}}% Ą
+    \DeclareUnicodeCharacter{0105}{\k{a}}% ą
+    \DeclareUnicodeCharacter{010C}{\v{C}}% Č
+    \DeclareUnicodeCharacter{010D}{\v{c}}% č
+    \DeclareUnicodeCharacter{0118}{\k{E}}% Ę
+    \DeclareUnicodeCharacter{0119}{\k{e}}% ę
+    \DeclareUnicodeCharacter{0116}{\.{E}}% Ė
+    \DeclareUnicodeCharacter{0117}{\.{e}}% ė
+    \DeclareUnicodeCharacter{012E}{\k{I}}% Į
+    \DeclareUnicodeCharacter{012F}{\k{i}}% į
+    \DeclareUnicodeCharacter{0160}{\v{S}}% Š
+    \DeclareUnicodeCharacter{0161}{\v{s}}% š
+    \DeclareUnicodeCharacter{0172}{\k{U}}% Ų
+    \DeclareUnicodeCharacter{0173}{\k{u}}% ų
+    \DeclareUnicodeCharacter{016A}{\={U}}% Ū
+    \DeclareUnicodeCharacter{016B}{\={u}}% ū
+    \DeclareUnicodeCharacter{017D}{\v{Z}}% Ž
+    \DeclareUnicodeCharacter{017E}{\v{z}}% ž
+  }
+  \makeatother
+\else
+  \usepackage{fontspec}
+\fi
+
+\usepackage[margin=1.2cm]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{multicol}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+\setlist{nosep, leftmargin=*}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textbf{Edukometrijos pagrindai: Klasterinė analizė (K1 „rankomis“)}}
+\rhead{VU MIF | Prof. V. Čekanavičius}
+\cfoot{\thepage}
+
+\setlength{\columnsep}{16pt}
+\setlength{\columnseprule}{0.2pt}
+
+% Tiksli dėžučių pločio kontrolė, apsauganti nuo stulpelio perpildymo (overfull hbox)
+\newcommand{\boxalert}[2]{%
+\noindent\fbox{%
+\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+\textbf{\textcolor{red!80!black}{#1:}} #2%
+}%
+}\vspace{1.5mm}%
+}
+
+\newcommand{\boxtip}[2]{%
+\noindent\fbox{%
+\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+\textbf{\textcolor{blue!80!black}{#1:}} #2%
+}%
+}\vspace{1.5mm}%
+}
+
+\title{\vspace{-1.2cm}\Large\textbf{Klasterinė analizė: Pilnas formulių ir skaičiavimų rankomis konspektas}\\\large Skirta K1 atsiskaitymui (\textit{ant popieriaus / „rankomis“})\vspace{-0.5cm}}
+\author{Parengta pagal prof. V. Čekanavičiaus paskaitų medžiagą ir atsiskaitymų reikalavimus}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\begin{multicols*}{2}
+
+\section{Esmė ir pagrindiniai principai}
+\textbf{Klasterinė analizė} (angl. \textit{Cluster Analysis}) -- daugiamatės statistikos metodas, kurio tikslas -- suskirstyti tiriamus objektus į homogeniškas grupes (\textbf{klasterius}) taip, kad objektai tame pačiame klasteryje būtų kuo panašesni (vidinis homogeniškumas), o objektai iš skirtingų klasterių -- kuo labiau skirtųsi (tarpklasterinė izoliacija).
+
+\textbf{Esminis skirtumas nuo diskriminantinės analizės}:
+\begin{itemize}
+    \item Klasterinėje analizėje grupių iš anksto \textbf{nežinome} (nėra mokymo imties su žinomomis klasėmis -- \textit{unsupervised learning}).
+    \item Kiek bus grupių -- iš anksto nežinoma (nustato tyrėjas pagal kriterijus ir prasmę).
+    \item Tuos pačius objektus galima skirtingai suklasterizuoti; nėra vienintelio „teisingo“ atsakymo -- sprendimas iš dalies subjektyvus.
+\end{itemize}
+
+Klasterizacijos rezultatą lemia trys veiksniai:
+\begin{enumerate}
+    \item Dviejų objektų atstumo / panašumo matas.
+    \item Dviejų klasterių atstumo matas (jungties taisyklė).
+    \item Objektų skirstymo metodas (hierarchinis aglomeracinis ar k-vidurkių).
+\end{enumerate}
+
+\section{Duomenų standartizavimas ir $z$-reikšmės}
+Turime $n$ objektų ir $p$ kintamųjų duomenų matricą: $X = (x_{ij})_{n \times p}$.
+
+\subsection{Imties charakteristikos kintamajam $X_j$}
+\begin{itemize}
+    \item \textbf{Imties vidurkis}: $\bar{x}_j = \frac{1}{n}\sum_{i=1}^n x_{ij}$
+    \item \textbf{Imties dispersija}: $s_j^2 = \frac{1}{n-1}\sum_{i=1}^n (x_{ij} - \bar{x}_j)^2$
+    \item \textbf{Standartinis nuokrypis}: $s_j = \sqrt{s_j^2}$
+\end{itemize}
+
+\subsection{$z$-transformacija (standartizavimas)}
+\begin{equation*}
+    z_{ij} = \frac{x_{ij} - \bar{x}_j}{s_j}
+\end{equation*}
+\textbf{Savybės}: po standartizavimo vidurkis $\bar{z}_j = 0$, o dispersija $s_{z_j}^2 = 1$.
+
+\textbf{Tiesinė transformacija}: $t_{ij} = \mu_0 + \sigma_0 z_{ij}$.\\
+Pvz., $t = 50 + 10z \implies$ vidurkis 50, dispersija 100. Informacijos kiekis lieka visiškai toks pat, kaip ir $z$-reikšmėse.
+
+\textbf{Atvirkštinė transformacija} (iš $z$ grįžti į natūralią skalę):
+\begin{equation*}
+    x_{ij} = \bar{x}_j + z_{ij} \cdot s_j
+\end{equation*}
+
+\subsection{$z$-reikšmių interpretacija (prof. Čekanavičiaus taisyklės)}
+\begin{itemize}
+    \item $z > 0$: reikšmė didesnė už imties vidurkį.
+    \item $z < 0$: reikšmė mažesnė už imties vidurkį.
+    \item $z \approx 0$: tipinė, vidutinė reikšmė.
+    \item $|z| > 2$: reta, nutolusi reikšmė (apie 5\% normaliojoje populiacijoje).
+    \item $|z| > 3$: \textbf{LABAI} didelis nuokrypis, ekstremali išskirtis (\textit{outlier}).
+\end{itemize}
+
+\boxalert{Kodėl būtina standartizuoti?}{%
+Euklido atstumui milžinišką įtaką daro kintamojo reikšmių absoliutus dydis. Jei turime populiaciją $populatn$ ($10^6$) ir raštingumą $literacy$ ($0-100\%$), atstumus praktiškai 100\% lems tik populiacija!\\
+\textbf{Standartizavus}: visi kintamieji tampa vienodai svarbūs.\\
+\textbf{Išskirčių problema}: jei yra super-išskirčių (pvz. Kinija, Indija), standartizavimas gali nepadėti („šalia dramblio ir kiškis, ir musė atrodo maži“).
+}
+
+\section{Atstumų ir panašumo matai}
+Tarkime turime $p$-mačius objektus $X = (x_1, \dots, x_p)$ ir $Y = (y_1, \dots, y_p)$.
+
+\subsection{Kiekybiniams kintamiesiems}
+\begin{itemize}
+    \item \textbf{Euklido atstumas}:
+    \begin{equation*}
+        d(X, Y) = \sqrt{\sum_{k=1}^p (x_k - y_k)^2} = \|X - Y\|
+    \end{equation*}
+    \item \textbf{Euklido atstumo kvadratas} (patogiausia skaičiuoti rankomis, nereikia traukti šaknies):
+    \begin{equation*}
+        d^2(X, Y) = \sum_{k=1}^p (x_k - y_k)^2
+    \end{equation*}
+    \item \textbf{Manheteno ($L_1$, City-block) atstumas}:
+    \begin{equation*}
+        d_1(X, Y) = \sum_{k=1}^p |x_k - y_k|
+    \end{equation*}
+    \item \textbf{Minkovskio ($L_m$) atstumas}:
+    \begin{equation*}
+        d_m(X, Y) = \left( \sum_{k=1}^p |x_k - y_k|^m \right)^{1/m}
+    \end{equation*}
+    Kai $m=1$ -- Manheteno; kai $m=2$ -- Euklido.
+    \item \textbf{Čebyševo ($L_\infty$) atstumas}:
+    \begin{equation*}
+        d_\infty(X, Y) = \max_{1 \le k \le p} |x_k - y_k|
+    \end{equation*}
+    \item \textbf{Mahalanobio atstumas} ($\Sigma$ -- imties kovariacijų matrica):
+    \begin{equation*}
+        d_M(X, Y) = \sqrt{(X - Y)^T \Sigma^{-1} (X - Y)}
+    \end{equation*}
+    \item \textbf{Koreliacinis panašumo matas}:
+    \begin{equation*}
+        r_{XY} = \frac{\sum_{k=1}^p (x_k - \bar{X})(y_k - \bar{Y})}{\sqrt{\sum (x_k - \bar{X})^2 \sum (y_k - \bar{Y})^2}}
+    \end{equation*}
+    Atstumas: $d = 1 - r_{XY}$.
+\end{itemize}
+
+\subsection{Kategoriniams / binariniams kintamiesiems}
+Sudaroma $2 \times 2$ požymių sutapimų lentelė:
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+ & $Y = 1$ & $Y = 0$ \\
+\hline
+$X = 1$ & $a$ (abu turi) & $b$ ($X$ turi, $Y$ ne) \\
+\hline
+$X = 0$ & $c$ ($X$ ne, $Y$ turi) & $d$ (nei vienas neturi) \\
+\hline
+\end{tabular}
+\end{center}
+\begin{itemize}
+    \item \textbf{Žakardo (Jaccard) panašumas ir atstumas} (atmeta $d$):
+    \begin{equation*}
+        S_J = \frac{a}{a + b + c}, \quad d_J = 1 - S_J = \frac{b + c}{a + b + c}
+    \end{equation*}
+    \item \textbf{Paprasto sutapimo indeksas (SMC)}:
+    \begin{equation*}
+        SMC = \frac{a + d}{a + b + c + d}
+    \end{equation*}
+    \item \textbf{Julo (Yule) koeficientas}:
+    \begin{equation*}
+        Y = \frac{ad - bc}{ad + bc}
+    \end{equation*}
+    \item \textbf{Lenso ir Viljamso (Bray-Curtis)}:
+    \begin{equation*}
+        d_{BC} = \frac{\sum_{k=1}^p |x_k - y_k|}{\sum_{k=1}^p (x_k + y_k)}
+    \end{equation*}
+    \item \textbf{Dice / Czekanowski}: $S = \frac{2a}{2a + b + c}$
+\end{itemize}
+
+\section{$K$-vidurkių ($K$-means) metodas rankomis}
+Iteracinis algoritmas, skaidantis $n$ objektų į $k$ klasterių $C_1, \dots, C_k$.
+
+\subsection{Žingsnis po žingsnio algoritmas}
+\begin{enumerate}
+    \item \textbf{Inicijavimas}: parenkami $k$ pradiniai centrai $c_1^{(0)}, \dots, c_k^{(0)}$.
+    \item \textbf{Objektų priskyrimas}: kiekvienam objektui $x_i$ apskaičiuojamas atstumas (arba atstumo kvadratas) iki visų centrų $d(x_i, c_j)$. Objektas skiriamas į klasterį su mažiausiu atstumu:
+    \begin{equation*}
+        x_i \in C_m \iff d(x_i, c_m) = \min_{1 \le j \le k} d(x_i, c_j)
+    \end{equation*}
+    \item \textbf{Centrų atnaujinimas}: kiekvieno klasterio naujas centras yra jo taškų koordinačių aritmetinis vidurkis:
+    \begin{equation*}
+        c_m = \frac{1}{|C_m|} \sum_{x \in C_m} x
+    \end{equation*}
+    \item \textbf{Konvergavimas}: jei po atnaujinimo nė vienas objektas nepakeitė klasterio, \textbf{baigiama}. Kitu atveju kartojami 2 ir 3 žingsniai.
+\end{enumerate}
+
+\subsection{Dispersinė dekompozicija (Kvadratų sumos)}
+\begin{itemize}
+    \item \textbf{Vidinė klasterio dispersija (WSS / ESS)}:
+    \begin{equation*}
+        WSS(C_m) = \sum_{x \in C_m} \|x - c_m\|^2
+    \end{equation*}
+    Bendra vidinė suma: $WSS = \sum_{m=1}^k WSS(C_m)$. Algoritmas minimizuoja $WSS$.
+    \item \textbf{Tarpklasterinė kvadratų suma (BSS)}:
+    \begin{equation*}
+        BSS = \sum_{m=1}^k |C_m| \cdot \|c_m - \bar{x}_{bendr}\|^2
+    \end{equation*}
+    kur $\bar{x}_{bendr}$ -- visos imties bendras vidurkis.
+    \item \textbf{Bendra kvadratų suma (TSS)}:
+    \begin{equation*}
+        TSS = \sum_{i=1}^n \|x_i - \bar{x}_{bendr}\|^2 = WSS + BSS
+    \end{equation*}
+    \item \textbf{Paaiškintos dispersijos dalis}: $R^2 = \frac{BSS}{TSS} = 1 - \frac{WSS}{TSS}$.
+\end{itemize}
+
+\section{Hierarchinis aglomeracinis klasterizavimas}
+Visi $n$ objektų pradžioje sudaro po vieną klasterį. Kiekviename žingsnyje sujungiami \textbf{du artimiausi} klasteriai, kol lieka vienas bendras klasteris.
+
+\subsection{Atstumų tarp klasterių apibrėžimai (Linkage)}
+Tarkime turime klasterius $A$ ir $B$ (dydžiai $|A|$ ir $|B|$), o $C$ -- trečias klasteris.
+
+\begin{enumerate}
+    \item \textbf{Vienetinės jungties (Single linkage / Nearest neighbor)}:
+    \begin{equation*}
+        d(A, B) = \min_{x \in A, y \in B} d(x, y)
+    \end{equation*}
+    Sujungus $A$ ir $B$ į $(AB)$, atstumas iki $C$:
+    \begin{equation*}
+        d((AB), C) = \min\{d(A, C), d(B, C)\}
+    \end{equation*}
+    \textit{Savybė}: linkęs formuoti „grandines“ (chaining effect).
+
+    \item \textbf{Pilnosios jungties (Complete linkage / Furthest neighbor)}:
+    \begin{equation*}
+        d(A, B) = \max_{x \in A, y \in B} d(x, y)
+    \end{equation*}
+    Sujungus $A$ ir $B$ į $(AB)$, atstumas iki $C$:
+    \begin{equation*}
+        d((AB), C) = \max\{d(A, C), d(B, C)\}
+    \end{equation*}
+    \textit{Savybė}: formuoja kompaktiškus, apvalius klasterius.
+
+    \item \textbf{Vidurkinės jungties (Average linkage / UPGMA)}:
+    \begin{equation*}
+        d(A, B) = \frac{1}{|A|\cdot |B|} \sum_{x \in A}\sum_{y \in B} d(x, y)
+    \end{equation*}
+    Sujungus $A$ ir $B$ į $(AB)$, atstumas iki $C$:
+    \begin{equation*}
+        d((AB), C) = \frac{|A|}{|A|+|B|}d(A, C) + \frac{|B|}{|A|+|B|}d(B, C)
+    \end{equation*}
+
+    \item \textbf{Centrų metodas (Centroid linkage / UPGMC)}:
+    Klasterių centrai $c_A$ ir $c_B$. Atstumas:
+    \begin{equation*}
+        d(A, B) = \|c_A - c_B\|
+    \end{equation*}
+    Jungtinis centras: $c_{AB} = \frac{|A|c_A + |B|c_B}{|A| + |B|}$.\\
+    Atstumų kvadratams:
+    \begin{align*}
+        d^2((AB), C) = &\,\frac{|A|}{|A|+|B|}d^2(A,C) + \frac{|B|}{|A|+|B|}d^2(B,C) \\
+        & - \frac{|A||B|}{(|A|+|B|)^2}d^2(A,B)
+    \end{align*}
+
+    \item \textbf{Wardo metodas (Ward's minimum variance method)}:
+    Sujungia klasterius, kurie \textbf{mažiausiai padidina} bendrą vidinę dispersiją:
+    \begin{align*}
+        d(A, B) &= \sum_{z \in A \cup B} \|z - c_{AB}\|^2 \\
+        &\quad - \sum_{x \in A} \|x - c_A\|^2 - \sum_{y \in B} \|y - c_B\|^2 \\
+        &= \frac{|A| \cdot |B|}{|A| + |B|} \|c_A - c_B\|^2 = \Delta WSS(A, B)
+    \end{align*}
+    Jei jungiami atskiri taškai ($|A|=1, |B|=1$):
+    \begin{equation*}
+        d(A, B) = \frac{1}{2}\|A - B\|^2
+    \end{equation*}
+\end{enumerate}
+
+\subsection{Bendroji Lance-Williams formulė}
+Atnaujinant atstumų matricą po $A$ ir $B$ sujungimo į $(AB)$:
+\begin{align*}
+    d((AB), C) = &\,\alpha_A d(A, C) + \alpha_B d(B, C) \\
+    & + \beta d(A, B) + \gamma |d(A, C) - d(B, C)|
+\end{align*}
+\begin{center}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Metodas} & $\alpha_A$ & $\alpha_B$ & $\beta$ & $\gamma$ \\
+\midrule
+Single & $1/2$ & $1/2$ & $0$ & $-1/2$ \\
+Complete & $1/2$ & $1/2$ & $0$ & $1/2$ \\
+Average & $\frac{|A|}{|A|+|B|}$ & $\frac{|B|}{|A|+|B|}$ & $0$ & $0$ \\
+Ward & $\frac{|A|+|C|}{|A|+|B|+|C|}$ & $\frac{|B|+|C|}{|A|+|B|+|C|}$ & $\frac{-|C|}{|A|+|B|+|C|}$ & $0$ \\
+\bottomrule
+\end{tabular}%
+}
+\end{center}
+
+\subsection{Dendrogramos braižymas rankomis}
+\begin{itemize}
+    \item Vertikalioji ašis: jungties aukštis $h$, lygus atstumui $d(A, B)$ tarp jungiamų klasterių.
+    \item Kirtimas: nubrėžus horizontalią liniją ties aukščiu $h$, kirstų šakų skaičius rodo suformuotų klasterių skaičių $k$.
+\end{itemize}
+
+\section{Klasterių kokybės ir skaičiaus $k$ indeksai}
+
+\subsection{1. Alkūnės (Elbow / lūžio) metodas}
+Braižoma $WSS(k)$ kreivė didėjant $k = 1, 2, 3, \dots$
+\begin{itemize}
+    \item Didinant $k$, $WSS$ visada monotoniškai mažėja.
+    \item Ieškomas \textbf{lūžio taškas} („alkūnė“), ties kuriuo $WSS$ kreivė nustoja staigiai kristi ir išsilygina. Tas $k$ yra optimalus.
+\end{itemize}
+
+\subsection{2. Silueto (Silhouette) metodas}
+Vertina kiekvieno objekto $i$ priskyrimo kokybę.
+Tarkime objektas $i$ priskirtas klasteriui $A$:
+\begin{enumerate}
+    \item $a(i)$ -- vidutinis atstumas nuo $i$ iki kitų \textbf{to paties} klasterio $A$ taškų:
+    \begin{equation*}
+        a(i) = \frac{1}{|A| - 1}\sum_{j \in A, j \ne i} d(i, j)
+    \end{equation*}
+    \item $d(i, C)$ -- vidutinis atstumas nuo $i$ iki kito klasterio $C$ taškų:
+    \begin{equation*}
+        d(i, C) = \frac{1}{|C|}\sum_{j \in C} d(i, j)
+    \end{equation*}
+    \item $b(i)$ -- atstumas iki \textbf{artimiausio gretimo} klasterio:
+    \begin{equation*}
+        b(i) = \min_{C \ne A} d(i, C)
+    \end{equation*}
+    \item \textbf{Silueto reikšmė} $s(i)$:
+    \begin{equation*}
+        s(i) = \frac{b(i) - a(i)}{\max\{a(i), b(i)\}}
+    \end{equation*}
+    (Jei klasteryje yra tik vienas elementas $|A|=1$, apibrėžiama $s(i) = 0$).
+\end{enumerate}
+
+\textbf{Silueto interpretacija}:
+\begin{itemize}
+    \item $-1 \le s(i) \le 1$.
+    \item $s(i) \approx 1$: objektas puikiai tinka savo klasteriui (labai toli nuo gretimų).
+    \item $s(i) \approx 0$: objektas yra ties dviejų klasterių riba.
+    \item $s(i) < 0$: \textbf{klaidingas priskyrimas}! Objektas yra arčiau gretimo klasterio nei savojo.
+    \item \textbf{Vidutinis siluetas}: $\bar{s} = \frac{1}{n}\sum_{i=1}^n s(i)$. Optimalus $k$ yra tas, kuriam $\bar{s}$ yra \textbf{didžiausias}.
+\end{itemize}
+
+\subsection{3. Dunn indeksas}
+Tegul $\Delta(C_m)$ yra klasterio $C_m$ skersmuo (diametras):
+\begin{equation*}
+    \Delta(C_m) = \max_{x, y \in C_m} d(x, y)
+\end{equation*}
+Tegul $\delta(C_i, C_j)$ yra minimalus atstumas tarp klasterių $C_i$ ir $C_j$:
+\begin{equation*}
+    \delta(C_i, C_j) = \min_{x \in C_i, y \in C_j} d(x, y)
+\end{equation*}
+\textbf{Dunn indeksas}:
+\begin{align*}
+    DI &= \frac{\min_{i \ne j} \delta(C_i, C_j)}{\max_{1 \le m \le k} \Delta(C_m)} \\
+    &= \frac{\text{Mažiausias tarpklasterinis atstumas}}{\text{Didžiausias klasterio skersmuo}}
+\end{align*}
+\textbf{Interpretacija}:
+\begin{itemize}
+    \item \textbf{Kuo $DI$ didesnis, tuo klasterizacija geresnė} (klasteriai kompaktiški ir gerai vienas nuo kito atskirti).
+    \item Maža reikšmė (pvz. $<0.1$) rodo prastai atskirtus arba ištįsusius klasterius.
+\end{itemize}
+
+\subsection{4. Calinski-Harabasz (CH) indeksas}
+ANOVA F-statistikos analogas (dispersijų santykis):
+\begin{equation*}
+    CH(k) = \frac{BSS / (k - 1)}{WSS / (n - k)}
+\end{equation*}
+Kuo $CH(k)$ didesnis, tuo klasterizacija kokybiškesnė.
+
+\subsection{5. Aglomeracinis koeficientas ($AC$)}
+\begin{itemize}
+    \item Normuotų dendrogramos jungčių vidurkis ($0 \le AC \le 1$).
+    \item Kuo $AC$ arčiau 1, tuo geresnė klasterinė struktūra.
+\end{itemize}
+
+\section{Pilni skaičiavimo „rankomis“ pavyzdžiai}
+
+\subsection{1 Pavyzdys: Hierarchinis aglomeravimas}
+Turime 4 objektus $\{A, B, C, D\}$ su atstumų matrica $D_0$:
+\begin{center}
+\begin{tabular}{c|cccc}
+ & $A$ & $B$ & $C$ & $D$ \\
+\hline
+$A$ & 0 & 2 & 6 & 8 \\
+$B$ & 2 & 0 & 5 & 7 \\
+$C$ & 6 & 5 & 0 & 3 \\
+$D$ & 8 & 7 & 3 & 0 \\
+\end{tabular}
+\end{center}
+
+\textbf{1 žingsnis}: Mažiausias atstumas yra $d(A, B) = 2$.\\
+Sujungiame $A$ ir $B$ į klasterį $(AB)$. Jungties aukštis $h_1 = 2$.
+
+\textbf{Matricos atnaujinimas}:
+\begin{itemize}
+    \item \textbf{Single linkage} (minimumas):
+    \begin{align*}
+        d((AB), C) &= \min(6, 5) = 5 \\
+        d((AB), D) &= \min(8, 7) = 7
+    \end{align*}
+    \item \textbf{Complete linkage} (maksimumas):
+    \begin{align*}
+        d((AB), C) &= \max(6, 5) = 6 \\
+        d((AB), D) &= \max(8, 7) = 8
+    \end{align*}
+    \item \textbf{Average linkage} (vidurkis):
+    \begin{equation*}
+        d((AB), C) = \frac{6 + 5}{2} = 5.5, \quad d((AB), D) = \frac{8 + 7}{2} = 7.5
+    \end{equation*}
+\end{itemize}
+
+\textbf{2 žingsnis} (naudojant Single linkage):\\
+Atnaujinta matrica tarp $(AB)$, $C$, $D$:
+\begin{center}
+\begin{tabular}{c|ccc}
+ & $(AB)$ & $C$ & $D$ \\
+\hline
+$(AB)$ & 0 & 5 & 7 \\
+$C$ & 5 & 0 & 3 \\
+$D$ & 7 & 3 & 0 \\
+\end{tabular}
+\end{center}
+Mažiausias elementas yra $d(C, D) = 3$.\\
+Sujungiame $C$ ir $D$ į klasterį $(CD)$ aukštyje $h_2 = 3$.
+
+\textbf{3 žingsnis}:\\
+Lieka sujungti $(AB)$ ir $(CD)$:\\
+$d((AB), (CD)) = \min(d((AB), C), d((AB), D)) = \min(5, 7) = 5$.\\
+Jungties aukštis $h_3 = 5$. Visi objektai sujungti!
+
+\subsection{2 Pavyzdys: $K$-vidurkių iteracija}
+Duoti 4 taškai plokštumoje:
+$A=(1, 2)$, $B=(2, 1)$, $C=(5, 6)$, $D=(6, 5)$.\\
+Pradiniai centrai: $c_1 = (1, 2)$ ($A$) ir $c_2 = (6, 5)$ ($D$).
+
+\textbf{Atstumų kvadratai} $d^2 = (x - c_x)^2 + (y - c_y)^2$:
+\begin{itemize}
+    \item $A$: $d^2(A, c_1) = 0$, $d^2(A, c_2) = 25 + 9 = 34 \implies \mathbf{C_1}$.
+    \item $B$: $d^2(B, c_1) = 1 + 1 = 2$, $d^2(B, c_2) = 16 + 16 = 32 \implies \mathbf{C_1}$.
+    \item $C$: $d^2(C, c_1) = 16 + 16 = 32$, $d^2(C, c_2) = 1 + 1 = 2 \implies \mathbf{C_2}$.
+    \item $D$: $d^2(D, c_1) = 25 + 9 = 34$, $d^2(D, c_2) = 0 \implies \mathbf{C_2}$.
+\end{itemize}
+Klasteriai: $C_1 = \{A, B\}$, $C_2 = \{C, D\}$.
+
+\textbf{Centrų perskaičiavimas}:
+\begin{align*}
+    c_1^{(1)} &= \frac{A + B}{2} = \left(\frac{1+2}{2}, \frac{2+1}{2}\right) = (1.5, 1.5) \\
+    c_2^{(1)} &= \frac{C + D}{2} = \left(\frac{5+6}{2}, \frac{6+5}{2}\right) = (5.5, 5.5)
+\end{align*}
+
+\textbf{Vidinė dispersija (WSS)}:
+\begin{align*}
+    WSS(C_1) &= \|A - c_1\|^2 + \|B - c_1\|^2 \\
+    &= 0.5 + 0.5 = 1.0 \\
+    WSS(C_2) &= \|C - c_2\|^2 + \|D - c_2\|^2 \\
+    &= 0.5 + 0.5 = 1.0 \\
+    WSS &= WSS(C_1) + WSS(C_2) = 2.0
+\end{align*}
+
+\subsection{3 Pavyzdys: Silueto skaičiavimas taškui $A$}
+Turime klasterius $C_1 = \{A, B\}$ ir $C_2 = \{C, D\}$:
+\begin{itemize}
+    \item $a(A) = d(A, B) = \sqrt{(1-2)^2 + (2-1)^2} = \sqrt{2} \approx 1.414$.
+    \item Atstumai nuo $A$ iki $C_2$ taškų ($C$ ir $D$):
+    \begin{align*}
+        d(A, C) &= \sqrt{16 + 16} = \sqrt{32} \approx 5.657 \\
+        d(A, D) &= \sqrt{25 + 9} = \sqrt{34} \approx 5.831
+    \end{align*}
+    \item $b(A) = \frac{5.657 + 5.831}{2} = 5.744$.
+    \item Siluetas taškui $A$:
+    \begin{align*}
+        s(A) &= \frac{b(A) - a(A)}{\max\{a(A), b(A)\}} \\
+        &= \frac{5.744 - 1.414}{5.744} \approx 0.754
+    \end{align*}
+    Reikšmė artima 1 $\implies$ objektas $A$ puikiai priskirtas.
+\end{itemize}
+
+\subsection{4 Pavyzdys: Dunn indekso skaičiavimas}
+Tiems patiems klasteriams $C_1=\{A, B\}$ ir $C_2=\{C, D\}$:
+\begin{itemize}
+    \item Klasterių diametrai:
+    $\Delta(C_1) = d(A, B) = \sqrt{2} \approx 1.414$,\\
+    $\Delta(C_2) = d(C, D) = \sqrt{2} \approx 1.414$.\\
+    Didžiausias diametras: $\max \Delta = 1.414$.
+    \item Tarpklasterinis atstumas:
+    \begin{align*}
+        \delta(C_1, C_2) &= \min_{u \in C_1, v \in C_2} d(u, v) \\
+        &= d(A, C) = \sqrt{32} \approx 5.657
+    \end{align*}
+    \item Dunn indeksas:
+    \begin{equation*}
+        DI = \frac{\delta(C_1, C_2)}{\max \Delta} = \frac{5.657}{1.414} = 4.00
+    \end{equation*}
+    Labai didelė reikšmė $\implies$ klasteriai idealiai atskirti!
+\end{itemize}
+
+\section{Egzamino strategija ir „spąstai“}
+\begin{enumerate}
+    \item \textbf{Euklido atstumas vs Kvadratas}:
+    Skaičiuojant $K$-vidurkius ar Wardo metodą rankomis, visada naudokite \textbf{atstumo kvadratą} $d^2 = \sum (x_k - y_k)^2$ -- nereikia traukti šaknų, sutaupysite laiko ir išvengsite apvalinimo klaidų!
+    \item \textbf{Centrų atnaujinimas}:
+    Nepamirškite, kad centroidas yra visų priskirtų taškų vidurkis. Jei klasteryje atsidūrė 3 taškai, dalinkite iš 3, o ne iš 2.
+    \item \textbf{Dendrogramos kirtimas}:
+    Jei prašoma rasti klasterius pagal dendrogramą su $k=3$, braukite horizontalią tiesę tokiame aukštyje, kur ji kerta lygiai 3 vertikalias linijas.
+    \item \textbf{Single vs Complete Linkage skirtumas}:
+    Single linkage po sujungimo renkasi \textbf{mažiausią} atstumą $\min$, o Complete linkage -- \textbf{didžiausią} $\max$.
+    \item \textbf{Neigiamas siluetas}:
+    Jei gaunate $s(i) < 0$, tai reiškia, kad $b(i) < a(i)$ -- objektas yra arčiau kito klasterio nei savojo (klaidingas priskyrimas arba neteisingai atlikta iteracija).
+\end{enumerate}
+
+\end{multicols*}
+\end{document}
