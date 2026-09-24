@@ -1,0 +1,411 @@
+\documentclass[9pt,a4paper]{article}
+\usepackage{iftex}
+
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \IfFileExists{l7xenc.def}{%
+    \usepackage[L7x,T1]{fontenc}%
+  }{%
+    \usepackage[T1]{fontenc}%
+  }
+  \IfFileExists{lithuanian.ldf}{%
+    \usepackage[lithuanian]{babel}%
+  }{}
+  \usepackage{lmodern}
+  % Atsarginis UTF-8 lietuviškų raidžių atvaizdavimas, jei kompiliuojama be L7x paketo
+  \makeatletter
+  \@ifundefined{DeclareUnicodeCharacter}{}{%
+    \DeclareUnicodeCharacter{0104}{\k{A}}% Ą
+    \DeclareUnicodeCharacter{0105}{\k{a}}% ą
+    \DeclareUnicodeCharacter{010C}{\v{C}}% Č
+    \DeclareUnicodeCharacter{010D}{\v{c}}% č
+    \DeclareUnicodeCharacter{0118}{\k{E}}% Ę
+    \DeclareUnicodeCharacter{0119}{\k{e}}% ę
+    \DeclareUnicodeCharacter{0116}{\.{E}}% Ė
+    \DeclareUnicodeCharacter{0117}{\.{e}}% ė
+    \DeclareUnicodeCharacter{012E}{\k{I}}% Į
+    \DeclareUnicodeCharacter{012F}{\k{i}}% į
+    \DeclareUnicodeCharacter{0160}{\v{S}}% Š
+    \DeclareUnicodeCharacter{0161}{\v{s}}% š
+    \DeclareUnicodeCharacter{0172}{\k{U}}% Ų
+    \DeclareUnicodeCharacter{0173}{\k{u}}% ų
+    \DeclareUnicodeCharacter{016A}{\={U}}% Ū
+    \DeclareUnicodeCharacter{016B}{\={u}}% ū
+    \DeclareUnicodeCharacter{017D}{\v{Z}}% Ž
+    \DeclareUnicodeCharacter{017E}{\v{z}}% ž
+  }
+  \makeatother
+\else
+  \usepackage{fontspec}
+\fi
+
+\usepackage[margin=1.2cm]{geometry}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{multicol}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{fancyhdr}
+
+\setlist{nosep, leftmargin=*}
+\pagestyle{fancy}
+\fancyhf{}
+\lhead{\textbf{Edukometrijos pagrindai: SEM, Kelių analizė ir CFA (S2 paruoštukė)}}
+\rhead{VU MIF | Prof. V. Čekanavičius}
+\cfoot{\thepage}
+
+\setlength{\columnsep}{16pt}
+\setlength{\columnseprule}{0.2pt}
+
+% Tiksli dėžučių pločio kontrolė, apsauganti nuo stulpelio perpildymo (overfull hbox)
+\newcommand{\boxalert}[2]{%
+\noindent\fbox{%
+\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+\textbf{\textcolor{red!80!black}{#1:}} #2%
+}%
+}\vspace{1.5mm}%
+}
+
+\newcommand{\boxtip}[2]{%
+\noindent\fbox{%
+\parbox{\dimexpr\linewidth-2\fboxsep-2\fboxrule\relax}{%
+\textbf{\textcolor{blue!80!black}{#1:}} #2%
+}%
+}\vspace{1.5mm}%
+}
+
+\title{\vspace{-1.2cm}\Large\textbf{SEM, Kelių analizė ir CFA: Pilnas formulių konspektas}\\\large Skirta S2 atsiskaitymui ir teorijai (\textit{pagal „Prieš S2(5)“ ir 4 SEM skaidres})\vspace{-0.5cm}}
+\author{Parengta pagal prof. V. Čekanavičiaus paskaitų medžiagą}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\begin{multicols*}{2}
+
+\section{Esmė ir modelių hierarchija}
+\textbf{Struktūrinių lygčių modeliavimas} (angl. \textit{Structural Equation Modeling, SEM}) -- daugiamatės statistikos metodas, tikrinantis, ar tyrėjo iškeltas kintamųjų priklausomybių modelis yra suderintas su stebimais duomenimis.
+
+\textbf{SEM apjungia 3 sritis}:
+\begin{enumerate}
+    \item \textbf{Tiesinę regresiją} (vieno endogeninio kintamojo priklausomybė nuo kelių egzogeninių).
+    \item \textbf{Kelių analizę} (\textit{Path Analysis, PA}) -- priežastiniai ryšiai tarp kelių stebimų kintamųjų (kai kintamasis vienoje lygtyje yra priklausomas, kitoje -- nepriklausomas).
+    \item \textbf{Patvirtinančiąją faktorinę analizę} (\textit{CFA}) -- ryšiai tarp stebimų indikatorių ir nematuojamų (\textbf{latentinių}) faktorių.
+\end{enumerate}
+
+\section{Kelių diagramos elementai}
+\begin{itemize}
+    \item \textbf{Stačiakampis} $\square$: \textbf{stebimas} kintamasis ($X, Y$).
+    \item \textbf{Ovalas / apskritimas} $\bigcirc$: \textbf{latentinis} kintamasis ($F, \xi, \eta$) arba liekamoji paklaida ($e, \zeta, \delta$).
+    \item \textbf{Vienpusė rodyklė} $\longrightarrow$: \textbf{priežastinis ryšys} (regresija). Rodyklė eina nuo priežasties link pasekmės ($X \to Y$).
+    \item \textbf{Dvipusė lanko formos rodyklė} $\longleftrightarrow$: \textbf{kovariacija / koreliacija} (be krypties priežastingumo).
+\end{itemize}
+
+\subsection{Kintamųjų tipai}
+\begin{itemize}
+    \item \textbf{Egzogeninis kintamasis} (nepriklausomas): neturi jokių įeinančių vienpusių rodyklių (iš jo rodyklės tik išeina). Jo dispersija ir kovariacijos su kitais egzogeniniais kintamaisiais vertinamos tiesiogiai.
+    \item \textbf{Endogeninis kintamasis} (priklausomas): turi bent vieną įeinančią vienpusę rodyklę $\to$. Kiekvienas endogeninis kintamasis \textbf{privalo turėti liekamąją paklaidą} ($e$), kurios dispersija $\text{Var}(e)$ yra vertinama.
+\end{itemize}
+
+\section{Modelio identifikacija ir laisvės laipsniai ($df$)}
+
+\subsection{Žinomų parametrų skaičius}
+Modeliui vertinti naudojama empirinė kovariacijų matrica $S$. Jei turime $k$ stebimų kintamųjų, matrica $S$ turi $k \times k$ elementų, tačiau dėl simetrijos nepriklausomos informacijos kiekis yra:
+\begin{equation*}
+    p^* = \frac{k(k + 1)}{2}
+\end{equation*}
+
+\subsection{Nežinomų parametrų skaičius ($q$)}
+Laisvi vertinami parametrai modelio viduje:
+\begin{itemize}
+    \item Kelių koeficientai (regresijos svoriai).
+    \item Egzogeninių kintamųjų dispersijos.
+    \item Endogeninių kintamųjų liekanų dispersijos $\text{Var}(e)$.
+    \item Kovariacijos tarp egzogeninių kintamųjų ar liekanų.
+\end{itemize}
+
+\subsection{Laisvės laipsniai ($df$)}
+\begin{equation*}
+    df = p^* - q = \frac{k(k + 1)}{2} - q
+\end{equation*}
+
+\subsection{Identifikacijos būsenos}
+\begin{enumerate}
+    \item \textbf{Poidentifikuotas} (\textit{Under-identified}): $df < 0$ ($p^* < q$). Lygčių mažiau nei nežinomųjų. Parametrų įvertinti neįmanoma!
+    \item \textbf{Tiksliai identifikuotas / sotusis} (\textit{Just-identified / Saturated}): $df = 0$ ($p^* = q$). Parametrai randami vienareikšmiškai, bet $\chi^2 = 0$, $p = 1$ -- modelio tinkamumo patikrinti neįmanoma.
+    \item \textbf{Viršidentifikuotas} (\textit{Over-identified}): $df > 0$ ($p^* > q$). Tai yra \textbf{būtina sąlyga} geram SEM tyrimui! Galima tikrinti modelio tinkamumą duomenims ($\chi^2$, RMSEA ir kt.).
+\end{enumerate}
+
+\subsection{Latentinių kintamųjų mastelio fiksavimas}
+Kadangi latentinis kintamasis neturi fizinės skalės, jo identifikavimui privaloma atlikti vieną iš dviejų:
+\begin{itemize}
+    \item \textbf{Referentinis indikatorius} (\textit{Marker variable}): vieno pasirinkto indikatoriaus kelias fiksuojamas lygiu 1 ($\lambda_1 = 1$). Tai numatytasis nustatymas \texttt{lavaan}.
+    \item \textbf{Faktoriaus standartizavimas}: faktoriaus dispersija fiksuojama lygi 1 ($\text{Var}(F) = 1$, komanda \texttt{std.lv = TRUE}).
+\end{itemize}
+
+\section{Wright'o kelių sekimo taisyklės ir poveikiai}
+
+\subsection{Tiesioginis, netiesioginis ir bendrasis poveikis}
+\begin{itemize}
+    \item \textbf{Tiesioginis poveikis} (\textit{Direct effect}): koeficientas ant tiesioginės rodyklės tarp dviejų kintamųjų: $X \xrightarrow{\beta} Y \implies \text{Direct} = \beta$.
+    \item \textbf{Netiesioginis poveikis} (\textit{Indirect effect}): poveikis per tarpinį kintamąjį (mediatorių):
+    \begin{align*}
+        &X \xrightarrow{a} M \xrightarrow{b} Y \\
+        &\text{Indirect} = a \cdot b
+    \end{align*}
+    Jei yra keli netiesioginiai keliai, jų sandaugos sudedamos: $\sum a_j b_j$.
+    \item \textbf{Bendrasis poveikis} (\textit{Total effect}):
+    \begin{align*}
+        \text{Total} &= \text{Direct} + \text{Indirect} \\
+        &= \beta + \sum a_j b_j
+    \end{align*}
+\end{itemize}
+
+\subsection{Wright'o kelių sekimo taisyklės (\textit{Tracing rules})}
+Koreliacija tarp bet kurių dviejų kintamųjų standartizuotame modelyje randama sudedant visų leistinų jungiančių kelių koeficientų sandaugas.
+
+\textbf{Leistino kelio taisyklės}:
+\begin{enumerate}
+    \item Negalima eiti per tą patį kintamąjį du kartus (nėra kilpų).
+    \item Negalima eiti pirmyn rodykle, o po to atgal ($\to \leftarrow$ draudžiama!). Galima eiti atgal, o po to pirmyn ($\leftarrow \to$ leidžiama).
+    \item Kelyje leidžiama daugiausiai viena dvipusė rodyklė $\leftrightarrow$ (kovariacija).
+\end{enumerate}
+
+\textbf{Pavyzdys iš paskaitos}:
+Jei $X \xrightarrow{0.35} M \xrightarrow{0.67} Y$ ir $X \xrightarrow{0.45} Y$:
+\begin{align*}
+    \text{cor}(X, Y) &= \text{Direct} + \text{Indirect} \\
+    &= 0.45 + 0.35 \times 0.67 = 0.6845
+\end{align*}
+
+\section{SEM matricinis pavidalas (LISREL ir RAM)}
+
+\subsection{LISREL struktūra}
+\begin{itemize}
+    \item \textbf{Struktūrinis modelis} (ryšiai tarp latentinių dydžių):
+    \begin{equation*}
+        \eta = B \eta + \Gamma \xi + \zeta
+    \end{equation*}
+    kur $\eta$ -- endogeniniai latentiniai, $\xi$ -- egzogeniniai latentiniai, $B$ -- endogeninių ryšiai, $\Gamma$ -- egzogeninių poveikiai, $\zeta$ -- paklaidos.
+    \item \textbf{Matavimo modeliai} (ryšiai su stebimais $x, y$):
+    \begin{align*}
+        y &= \Lambda_y \eta + \epsilon \\
+        x &= \Lambda_x \xi + \delta
+    \end{align*}
+\end{itemize}
+
+\subsection{RAM (Reticular Action Model) formulė}
+Visi kintamieji sujungiami į vektorių $v$:
+\begin{equation*}
+    v = A v + u
+\end{equation*}
+kur $A$ -- asimetrinių kelių matrica ($\to$), $S$ -- simetrinių ryšių matrica (kovariacijos ir dispersijos $\leftrightarrow$), $F$ -- filtrinė matrica ($x = F v$).
+Atkurta kovariacijų matrica:
+\begin{equation*}
+    \Sigma(\theta) = F (I - A)^{-1} S (I - A)^{-T} F^T
+\end{equation*}
+
+\section{Modelio tinkamumo rodikliai (\textit{Fit Measures})}
+
+\subsection{1. Chi-kvadrato ($\chi^2$) testas}
+Tikrina nulinę hipotezę $H_0: \Sigma(\theta) = \Sigma$ (atkurtas modelis idealiai atitinka populiacijos kovariacijų matricą).
+\begin{itemize}
+    \item \textbf{Siekiama reikšmė}: $p > 0.05$ (nėra reikšmingo skirtumo tarp modelio ir duomenų $\implies$ modelis tinka!).
+    \item \textbf{Prof. Čekanavičiaus dėsnis dėl imties dydžio}:
+    Jei imtis maža ($n < 200$), norime $p > 0.05$. Jei imtis didelė ($n > 400-500$), $\chi^2$ automatiškai tampa statistiškai reikšmingas ($p < 0.05$) net prie menkų nuokrypių. Tuomet $\chi^2$ $p$-reikšme nebepasitikima ir vertinama pagal indeksus!
+\end{itemize}
+
+\subsection{2. Normuotas Chi-kvadratas ($NC$)}
+\begin{align*}
+    NC &= \frac{\chi^2}{df} = \frac{\text{Test statistic}}{\text{df}}
+\end{align*}
+\textbf{Kriterijai}:
+\begin{itemize}
+    \item $NC < 2$ -- puikus modelio tinkamumas (labai gerai).
+    \item $NC < 3$ -- priimtinas tinkamumas (iš bėdos tinka).
+    \item $NC > 5$ -- prastas modelis.
+\end{itemize}
+
+\subsection{3. RMSEA (Root Mean Square Error of Approx.)}
+\begin{equation*}
+    RMSEA = \sqrt{\max\left(0,\, \frac{\chi^2 - df}{(n - 1)df}\right)}
+\end{equation*}
+\textbf{Interpretacija}:
+\begin{itemize}
+    \item $RMSEA < 0.05$ -- modelis \textbf{labai gerai} tinka duomenims.
+    \item $0.05 \le RMSEA \le 0.08$ -- patenkinamas, priimtinas tinkamumas.
+    \item $RMSEA > 0.08$ -- prastas tinkamumas ($> 0.10$ modelis netinkamas).
+    \item Tikrinama $H_0: RMSEA \le 0.05$: norime $p > 0.05$.
+\end{itemize}
+
+\subsection{4. Lyginamieji indeksai (CFI, TLI, SRMR)}
+\begin{itemize}
+    \item \textbf{CFI (Comparative Fit Index)}:
+    Palygina tiriamąjį modelį su nepriklausomu (nuliniu).
+    \textbf{Geras}: $CFI > 0.95$; priimtinas: $CFI > 0.90$.
+    \item \textbf{TLI (Tucker-Lewis Index)}:
+    Baudžia už pernelyg sudėtingą modelį.
+    \textbf{Geras}: $TLI > 0.95$; priimtinas: $TLI > 0.90$.
+    \item \textbf{SRMR (Std. Root Mean Square Residual)}:
+    Standartizuotas liekanų vidurkis.
+    \textbf{Geras}: $SRMR < 0.08$.
+    \item \textbf{AIC (Akaike Information Criterion)}:
+    Naudojamas ne vieno modelio vertinimui, o kelių modelių \textbf{lyginimui}. Geresnis tas modelis, kurio \textbf{AIC yra mažesnis}.
+\end{itemize}
+
+\section{Parametrų įvertinimas ir interpretavimas}
+
+\subsection{Reikšmingumo tikrinimas}
+Kiekvienam vertinamam parametrui $\theta$ pateikiama:
+\begin{itemize}
+    \item Įvertis (\textit{Estimate}) $\hat{\theta}$.
+    \item Standartinė paklaida (\textit{Std.Err}) $SE(\hat{\theta})$.
+    \item $z$-statistika: $z = \frac{\hat{\theta}}{SE(\hat{\theta})}$.
+    \item $p$-reikšmė ($P(>|z|)$): jei $p < 0.05$, parametras yra \textbf{statistiškai reikšmingas}.
+\end{itemize}
+
+\subsection{Standartizuoti vs nestandartizuoti parametrai}
+\begin{itemize}
+    \item \textbf{Nestandartizuoti} (\texttt{Estimate}): rodo pokytį originaliais kintamųjų vienetais. Naudojami struktūrinių lygčių užrašymui ir prognozavimui.
+    \item \textbf{Standartizuoti} (\texttt{Std.all}): visi kintamieji transformuoti į $z$-skalę (vidurkis 0, dispersija 1).
+    \textbf{Nauda}: leidžia tiesiogiai palyginti, kuris kintamasis daro \textbf{stipriausią santykinį poveikį}.
+\end{itemize}
+
+\boxalert{Dėstytojo pastabos dėl parametrų interpretacijos}{%
+\begin{enumerate}
+    \item \textbf{Nereikšmingos paklaidų dispersijos} ($p > 0.05$ prie $\text{Var}(e)$): tai nėra blogai! Tai rodo, kad priklausomybė sumodeliuota taip tiksliai, jog liekamoji dispersija praktiškai lygi 0.
+    \item \textbf{Blogas modelis (Heywood atvejai)}: jei gaunama neigiama dispersija ($\text{Var}(e) < 0$) arba koreliacija $|r| > 1$, modelis yra blogai specifikuotas arba duomenys netinka.
+    \item \textbf{Koreliacijos grafike}: rodo bendrą latentinių ar egzogeninių kintamųjų ryšį, nesusijusį su priežastine kryptimi.
+\end{enumerate}
+}
+
+\section{R ir \texttt{lavaan} komandų paruoštukė}
+
+\subsection{1. Modelio sintaksė}
+\begin{center}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lll}
+\toprule
+\textbf{Operatorius} & \textbf{Reikšmė} & \textbf{Pavyzdys} \\
+\midrule
+\texttt{\~{}} & Regresija (kelias) & \texttt{Y \~{} X1 + X2} \\
+\texttt{=\~{}} & Latentinis faktorius (CFA) & \texttt{F1 =\~{} A + B + C} \\
+\texttt{\~{}\~{}} & Kovariacija / dispersija & \texttt{F1 \~{}\~{} F2} arba \texttt{X \~{}\~{} X} \\
+\texttt{:=} & Naujas parametras & \texttt{ind := a*b} \\
+\bottomrule
+\end{tabular}%
+}
+\end{center}
+
+\subsection{2. Modelio paleidimas su pradiniais duomenimis}
+\begin{footnotesize}
+\begin{verbatim}
+library(lavaan)
+library(lavaanPlot)
+df <- na.omit(df)
+mod <- '
+  trstun ~ trstep
+  happy ~ trstun + stfhlth
+  stflife ~ trstun + happy + stfhlth
+'
+fit <- sem(mod, data=df, std.lv=TRUE)
+\end{verbatim}
+\end{footnotesize}
+
+\subsection{3. Modelio paleidimas su kovariacijų matrica}
+Kai duota kovariacijų matrica ir stebinių skaičius $n$:
+\begin{footnotesize}
+\begin{verbatim}
+cov_mat <- matrix(c(
+  7.0, 4.7, 4.4, 1.8, 1.1, 0.7,
+  4.7, 7.3, 3.0, 2.0, 1.3, 0.8,
+  4.4, 3.0, 5.2, 1.5, 0.9, 1.0,
+  1.8, 2.0, 1.5, 4.7, 2.5, 1.5,
+  1.1, 1.3, 0.9, 2.5, 3.0, 0.9,
+  0.7, 0.8, 1.0, 1.5, 0.9, 5.5
+), nrow=6, byrow=TRUE,
+dimnames=list(
+  c("A","B","C","D","E","F"),
+  c("A","B","C","D","E","F")))
+
+mod_cfa <- '
+  F1 =~ A + B + C
+  F2 =~ D + E + F
+  F1 ~~ F2
+'
+fit_cfa <- sem(mod_cfa,
+  sample.cov=cov_mat,
+  sample.nobs=170)
+\end{verbatim}
+\end{footnotesize}
+
+\subsection{4. Rezultatų išvedimas ir grafikas}
+\begin{footnotesize}
+\begin{verbatim}
+# Išsami suvestinė su indeksais
+summary(fit, standardized=TRUE,
+        fit.measures=TRUE)
+
+# Kelio diagrama su standartizuotais svoriais
+lavaanPlot(model=fit, coefs=TRUE,
+           stand=TRUE, covs=TRUE)
+\end{verbatim}
+\end{footnotesize}
+
+\section{Praktiniai pavyzdžiai iš „Prieš S2(5)“}
+
+\subsection{1 Pavyzdys: Kelių analizė (\textit{trust.sav})}
+\textbf{Kintamieji}:
+\begin{itemize}
+    \item Egzogeniniai: $trstep$ (pasitikėjimas EP), $stfhlth$ (pasit. sveikatos apsauga).
+    \item Endogeniniai: $trstun$ (pasit. JT), $happy$ (laimingumas), $stflife$ (pasitenkinimas gyvenimu).
+\end{itemize}
+
+\textbf{Struktūrinės lygtys su įverčiais}:
+\begin{align*}
+    trstun &= 0.635 \cdot trstep + e_1 \\
+    happy &= 0.157 \cdot trstun + 0.156 \cdot stfhlth + e_2 \\
+    stflife &= 0.165 \cdot trstun + 0.723 \cdot happy \\
+    &\quad + 0.133 \cdot stfhlth + e_3
+\end{align*}
+Liekanų dispersijos: $\text{Var}(e_1)=3.947$, $\text{Var}(e_2)=2.692$, $\text{Var}(e_3)=2.338$.
+
+\textbf{Tinkamumo vertinimas}:
+\begin{itemize}
+    \item $\chi^2 = 1.613$, $df = 3$, $p = 0.656 > 0.05 \implies$ modelis puikiai tinka duomenims!
+    \item $NC = \frac{1.613}{3} = 0.538 < 2 \implies$ puiku.
+    \item $RMSEA = 0.000 < 0.05 \implies$ tobulas.
+\end{itemize}
+
+\textbf{Netiesioginis poveikis}:
+Poveikis nuo $trstun$ į $stflife$ per $happy$:
+\begin{align*}
+    \text{Indirect} &= 0.157 \times 0.723 = 0.114 \\
+    \text{Total} &= 0.165 + 0.114 = 0.279
+\end{align*}
+
+\subsection{2 Pavyzdys: CFA su kovariacine matrica}
+Duota 6 kintamųjų kovariacinė matrica ($k=6$, $n=170$).
+\begin{itemize}
+    \item Žinomos informacijos: $p^* = \frac{6 \times 7}{2} = 21$.
+    \item Laisvi parametrai: 4 faktorių svoriai (2 fiksuoti į 1) + 6 paklaidų dispersijos + 2 faktorių dispersijos + 1 kovariacija $F_1 \leftrightarrow F_2 \implies q = 13$.
+    \item Laisvės laipsniai: $df = 21 - 13 = 8$.
+    \item $\chi^2 = 10.014$, $df = 8$, $p = 0.264 > 0.05 \implies$ modelis tinka duomenims.
+    \item $RMSEA = 0.038 < 0.05 \implies$ geras modelis.
+    \item Koreliacija tarp $F_1$ ir $F_2$ yra $0.375$ (vidutinė).
+\end{itemize}
+
+\section{Egzamino patarimai ir atsakymai}
+\begin{enumerate}
+    \item \textbf{Kada kintamieji endogeniniai?} Kai į juos įeina bent viena rodyklė $\to$. Jie visada turi paklaidą $e$.
+    \item \textbf{Kaip atsakyti apie $\chi^2$?}
+    Jei $p > 0.05$, rašome: „Modelis suderintas su duomenimis, duomenys modeliui neprieštarauja“. Jei $p < 0.05$, bet $n$ didelė, žiūrime $NC < 2$ ir $RMSEA < 0.05$.
+    \item \textbf{Kuris poveikis stipriausias?}
+    Žiūrėti į \texttt{Std.all} stulpelį (standartizuotus koeficientus)! Didesnis absoliutus dydis rodo didesnę santykinę įtaką.
+\end{enumerate}
+
+\end{multicols*}
+\end{document}
